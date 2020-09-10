@@ -34,8 +34,9 @@ public class WatchCallBack  implements Watcher ,AsyncCallback.StatCallback, Asyn
         this.zk = zk;
     }
 
-
+    //语义：无论节点存在不存在，取节点数据
     public void aWait(){
+        //路径是：/testLock/AppConf
         zk.exists("/AppConf",this,this ,"ABC");
         try {
             cc.await();
@@ -44,6 +45,7 @@ public class WatchCallBack  implements Watcher ,AsyncCallback.StatCallback, Asyn
         }
     }
 
+    //有数据的callback，getData触发的callback
     @Override
     public void processResult(int rc, String path, Object ctx, byte[] data, Stat stat) {
 
@@ -56,14 +58,18 @@ public class WatchCallBack  implements Watcher ,AsyncCallback.StatCallback, Asyn
 
     }
 
+    //状态的callback,exists触发的callback
     @Override
     public void processResult(int rc, String path, Object ctx, Stat stat) {
+        //节点存在的话，get数据
         if(stat != null){
+            //getData消耗一个watch以后，再注册了一个watch
             zk.getData("/AppConf",this,this,"sdfs");
         }
 
     }
 
+    //对节点的watch
     @Override
     public void process(WatchedEvent event) {
 
@@ -75,9 +81,9 @@ public class WatchCallBack  implements Watcher ,AsyncCallback.StatCallback, Asyn
 
                 break;
             case NodeDeleted:
-                //容忍性
+                //容忍性：如果要求数据一致性就取配置，不要求数据一致性则不取配置
                 conf.setConf("");
-                cc = new CountDownLatch(1);
+                cc = new CountDownLatch(1); //重新设置为1
                 break;
             case NodeDataChanged:
                 zk.getData("/AppConf",this,this,"sdfs");

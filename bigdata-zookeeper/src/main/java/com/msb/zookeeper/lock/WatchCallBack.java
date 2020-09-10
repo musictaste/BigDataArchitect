@@ -67,6 +67,7 @@ public class WatchCallBack   implements Watcher, AsyncCallback.StringCallback ,A
     }
 
 
+    //watch  -> 关注节点删除事件
     @Override
     public void process(WatchedEvent event) {
 
@@ -79,6 +80,9 @@ public class WatchCallBack   implements Watcher, AsyncCallback.StringCallback ,A
             case NodeCreated:
                 break;
             case NodeDeleted:
+                //关心的时候前面一个节点，所以不需要watch
+                //callback -> children2callback
+                //最烧脑的部分
                 zk.getChildren("/",false,this ,"sdf");
                 break;
             case NodeDataChanged:
@@ -89,11 +93,13 @@ public class WatchCallBack   implements Watcher, AsyncCallback.StringCallback ,A
 
     }
 
+    //创建节点的callback
     @Override
     public void processResult(int rc, String path, Object ctx, String name) {
         if(name != null ){
             System.out.println(threadName  +"  create node : " +  name );
             pathName =  name ;
+            //path：/testLock  ,不需要监控父目录,这样成本太大，callback=Children2Callback
             zk.getChildren("/",false,this ,"sdf");
         }
 
@@ -103,7 +109,8 @@ public class WatchCallBack   implements Watcher, AsyncCallback.StringCallback ,A
     @Override
     public void processResult(int rc, String path, Object ctx, List<String> children, Stat stat) {
 
-        //一定能看到自己前边的。。
+        //一定是：自己创建完了，并且一定能看到自己前边的创建的节点
+        //取到的子节点，是乱序的，需要排序
 
 //        System.out.println(threadName+"look locks.....");
 //        for (String child : children) {
@@ -111,7 +118,7 @@ public class WatchCallBack   implements Watcher, AsyncCallback.StringCallback ,A
 //        }
 
         Collections.sort(children);
-        int i = children.indexOf(pathName.substring(1));
+        int i = children.indexOf(pathName.substring(1));  //节点名称有/,需要截取
 
 
         //是不是第一个
@@ -119,6 +126,8 @@ public class WatchCallBack   implements Watcher, AsyncCallback.StringCallback ,A
             //yes
             System.out.println(threadName +" i am first....");
             try {
+                //没有业务处理，执行速度太快；导致后一个节点刚watch到第一个节点，但是第一个节点已经delete,导致后一个节点没有watch到delete事件
+                //重入锁
                 zk.setData("/",threadName.getBytes(),-1);
                 cc.countDown();
 
@@ -129,10 +138,13 @@ public class WatchCallBack   implements Watcher, AsyncCallback.StringCallback ,A
             }
         }else{
             //no
+            //watcher: 节点状态变化，节点删除
+            //callback: 还是该方法，是不是第一个节点
             zk.exists("/"+children.get(i-1),this,this,"sdf");
         }
 
     }
+
 
     @Override
     public void processResult(int rc, String path, Object ctx, Stat stat) {

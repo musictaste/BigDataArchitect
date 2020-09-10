@@ -42,6 +42,7 @@ public class TestConfig {
         //1，节点不存在
         //2，节点存在
 
+        //真正的业务代码在这儿：要么打印，要么等着去数据
         while(true){
 
             if(myConf.getConf().equals("")){

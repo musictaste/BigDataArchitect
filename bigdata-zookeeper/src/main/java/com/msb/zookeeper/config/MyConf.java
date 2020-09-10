@@ -1,11 +1,11 @@
 package com.msb.zookeeper.config;
 
 /**
- * @author: 马士兵教育
+ * @author: 李淼
  * @create: 2019-09-20 20:28
+ * 这个class才是你未来最关心的地方‘
+ * 依据：未来配置文件的格式
  */
-
-//这个class使你未来最关心的地方？
 public class MyConf {
 
     private  String conf ;

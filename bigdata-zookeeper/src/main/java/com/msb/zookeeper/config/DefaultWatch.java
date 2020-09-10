@@ -6,8 +6,8 @@ import org.apache.zookeeper.Watcher;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * @author: 马士兵教育
  * @create: 2019-09-20 20:12
+ * DefaultWater  跟session有关系，跟path没有关系
  */
 public class DefaultWatch  implements Watcher {
 
